@@ -5,19 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script> <!-- 添加 Google API Client Library -->
     <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-        h1 {
-            color: #333;
-        }
+        /* ... (您的 CSS 样式) ... */
     </style>
 </head>
 <body>
-    <h1>欢迎来到任务管理 Mini App！</h1>
-    <p>这里将是您的任务管理界面。</p>
+    <h1>任务列表</h1>
+    <ul id="task-list">
+        <!-- 任务将在这里加载 -->
+    </ul>
 
     <button onclick="closeWebApp()">关闭 Mini App</button>
 
@@ -25,12 +22,84 @@
         // 初始化 Telegram Web App
         Telegram.WebApp.ready();
 
-        // 获取 Telegram 用户信息 (如果需要)
-        if (Telegram.WebApp.initDataUnsafe) {
-            console.log("Telegram 用户信息:", Telegram.WebApp.initDataUnsafe.user);
-            // 您可以在这里获取用户ID等信息
-        } else {
-            console.log("无法获取 Telegram 用户信息");
+        // 替换为您的 Google Sheet ID 和范围
+        const SPREADSHEET_ID = '1L3zPq5idcLsm6CLJgRHRMZ2DTii0XW--jQ6TH8cK4Gg'; // 例如：1AbCdEfGhIjKlMnO_pQrStUvWxYz123456
+        const RANGE = 'Sheet1!A:B'; // 例如：Sheet1!C:K (假设任务描述在 A 列，完成状态在 B 列)
+
+        // 替换为您的 Google Cloud 项目的 API Key
+        // **注意：直接在前端使用 API Key 存在安全风险！**
+        const API_KEY = 'AIzaSyDIi_B1X0ow_D0vLnwPPhKZ5E_U2teWhHQ';
+
+        // 初始化 Google API Client Library
+        function handleClientLoad() {
+            gapi.load('client', initClient);
+        }
+
+        function initClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+            }).then(function () {
+                // API 客户端初始化成功
+                console.log("Google API client loaded.");
+                // 可以在这里立即获取数据，或者等待 Mini App 准备好
+                fetchTasks();
+            }, function(error) {
+                console.error("初始化 Google API 客户端失败:", error);
+                document.getElementById('task-list').innerHTML = '<li>加载任务失败：API 初始化错误。</li>';
+            });
+        }
+
+        // 获取任务列表的函数
+        async function fetchTasks() {
+            try {
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_ID,
+                    range: RANGE,
+                });
+
+                const values = response.result.values;
+
+                if (!values || values.length === 0) {
+                    document.getElementById('task-list').innerHTML = '<li>没有任务。</li>';
+                    return;
+                }
+
+                const tasks = values.map((row, index) => {
+                    // 假设第一列是任务描述，第二列是完成状态 (例如 'TRUE' 或 'FALSE')
+                    return {
+                        id: index + 1, // 简单的 ID
+                        description: row[0] || '', // 任务描述
+                        completed: row[1] ? row[1].toUpperCase() === 'TRUE' : false // 将字符串 'TRUE' 转换为布尔值
+                    };
+                });
+
+                displayTasks(tasks);
+
+            } catch (error) {
+                console.error("获取任务失败:", error);
+                document.getElementById('task-list').innerHTML = '<li>加载任务失败：获取数据错误。</li>';
+            }
+        }
+
+        // 显示任务列表的函数
+        function displayTasks(tasks) {
+            const taskListElement = document.getElementById('task-list');
+            taskListElement.innerHTML = ''; // 清空现有列表
+
+            if (tasks.length === 0) {
+                taskListElement.innerHTML = '<li>没有任务。</li>';
+                return;
+            }
+
+            tasks.forEach(task => {
+                const listItem = document.createElement('li');
+                listItem.textContent = task.description;
+                if (task.completed) {
+                    listItem.classList.add('completed');
+                }
+                taskListElement.appendChild(listItem);
+            });
         }
 
         // 关闭 Mini App 的函数
@@ -38,8 +107,11 @@
             Telegram.WebApp.close();
         }
 
-        // 在这里添加您的 Mini App 的其他 JavaScript 代码
-        // 例如：加载任务列表，处理用户操作等
+        // 当 Mini App 准备就绪时初始化 Google API 客户端并获取任务列表
+        Telegram.WebApp.ready(function() {
+            handleClientLoad();
+        });
+
     </script>
 </body>
 </html>
