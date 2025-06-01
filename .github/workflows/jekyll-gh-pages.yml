@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>任务管理 Mini App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>欢迎来到任务管理 Mini App！</h1>
+    <p>这里将是您的任务管理界面。</p>
+
+    <button onclick="closeWebApp()">关闭 Mini App</button>
+
+    <script>
+        // 初始化 Telegram Web App
+        Telegram.WebApp.ready();
+
+        // 获取 Telegram 用户信息 (如果需要)
+        if (Telegram.WebApp.initDataUnsafe) {
+            console.log("Telegram 用户信息:", Telegram.WebApp.initDataUnsafe.user);
+            // 您可以在这里获取用户ID等信息
+        } else {
+            console.log("无法获取 Telegram 用户信息");
+        }
+
+        // 关闭 Mini App 的函数
+        function closeWebApp() {
+            Telegram.WebApp.close();
+        }
+
+        // 在这里添加您的 Mini App 的其他 JavaScript 代码
+        // 例如：加载任务列表，处理用户操作等
+    </script>
+</body>
+</html>
